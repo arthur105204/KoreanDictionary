@@ -14,7 +14,8 @@ A comprehensive Android application for Korean dictionary lookup using the KRDic
 
 ## Screenshots
 
-*Add screenshots here when available*
+<img width="280" height="601" alt="image" src="https://github.com/user-attachments/assets/31889206-3d6c-47c5-a877-519b333a3602" />
+
 
 ## Setup Instructions
 
