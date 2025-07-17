@@ -1,5 +1,6 @@
 package vn.edu.fpt.koreandictionary.viewmodel;
 
+import android.content.Context;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -21,14 +22,15 @@ import vn.edu.fpt.koreandictionary.model.POSGroup;
 import vn.edu.fpt.koreandictionary.model.Sense;
 import vn.edu.fpt.koreandictionary.network.KRDictApiService;
 import vn.edu.fpt.koreandictionary.network.RetrofitClient;
+import vn.edu.fpt.koreandictionary.util.ApiKeyManager;
 import vn.edu.fpt.koreandictionary.util.Resource;
 
 public class DictionaryViewModel extends ViewModel {
-    private static final String API_KEY = BuildConfig.KR_DICT_API_KEY;
     private final MutableLiveData<Resource<List<POSGroup>>> result = new MutableLiveData<>();
     private String baseWord = "";
     private String pos = "";
     private List<Example> examples = new ArrayList<>();
+    private Context context;
 
     public LiveData<Resource<List<POSGroup>>> getResult() {
         return result;
@@ -42,12 +44,26 @@ public class DictionaryViewModel extends ViewModel {
         return pos;
     }
 
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    private String getApiKey() {
+        if (context == null) {
+            android.util.Log.e("DictionaryViewModel", "Context is null, cannot load API key");
+            return "";
+        }
+        String apiKey = ApiKeyManager.getApiKey(context);
+        android.util.Log.d("DictionaryViewModel", "API Key loaded: " + (apiKey.isEmpty() ? "EMPTY" : "SUCCESS"));
+        return apiKey;
+    }
+
     public void searchWord(String word) {
         result.setValue(Resource.loading(null));
         KRDictApiService api = RetrofitClient.getClient().create(KRDictApiService.class);
         
         // First, fetch word definitions
-        Call<KRDictResponse> definitionCall = api.searchWord(API_KEY, word, "y", "1", 10, 1, "dict", "word", "n");
+        Call<KRDictResponse> definitionCall = api.searchWord(getApiKey(), word, "y", "1", 10, 1, "dict", "word", "n");
         definitionCall.enqueue(new Callback<KRDictResponse>() {
             @Override
             public void onResponse(Call<KRDictResponse> call, Response<KRDictResponse> response) {
@@ -74,7 +90,7 @@ public class DictionaryViewModel extends ViewModel {
     
     private void fetchExamples(String word, List<Sense> senses, String pos) {
         KRDictApiService api = RetrofitClient.getClient().create(KRDictApiService.class);
-        Call<ExampleResponse> exampleCall = api.getExamples(API_KEY, word, "exam", "y", "1", 10);
+        Call<ExampleResponse> exampleCall = api.getExamples(getApiKey(), word, "exam", "y", "1", 10, 1);
         exampleCall.enqueue(new Callback<ExampleResponse>() {
             @Override
             public void onResponse(Call<ExampleResponse> call, Response<ExampleResponse> response) {

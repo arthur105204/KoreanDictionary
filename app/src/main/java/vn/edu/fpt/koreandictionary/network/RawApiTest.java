@@ -1,24 +1,26 @@
 package vn.edu.fpt.koreandictionary.network;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import vn.edu.fpt.koreandictionary.util.ApiKeyManager;
 
 public class RawApiTest {
     private static final String TAG = "RawApiTest";
-    private static final String API_KEY = BuildConfig.KR_DICT_API_KEY;
 
-    public static void testRawApi(String word, ApiCallback callback) {
+    public static void testRawApi(Context context, String word, ApiCallback callback) {
         new AsyncTask<String, Void, String>() {
             @Override
             protected String doInBackground(String... params) {
                 try {
+                    String apiKey = ApiKeyManager.getApiKey(context);
                     String urlString = String.format(
                         "https://krdict.korean.go.kr/api/search?key=%s&q=%s&translated=y&trans_lang=1&num=10&start=1&sort=dict&part=word&advanced=n",
-                        API_KEY, java.net.URLEncoder.encode(params[0], "UTF-8")
+                        apiKey, java.net.URLEncoder.encode(params[0], "UTF-8")
                     );
                     URL url = new URL(urlString);
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();

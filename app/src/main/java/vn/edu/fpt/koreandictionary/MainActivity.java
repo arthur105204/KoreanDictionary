@@ -37,6 +37,7 @@ public class MainActivity extends ComponentActivity {
         textViewMessage = findViewById(R.id.textViewMessage);
         recyclerViewResults.setLayoutManager(new LinearLayoutManager(this));
         viewModel = new ViewModelProvider(this).get(DictionaryViewModel.class);
+        viewModel.setContext(this);
 
         buttonSearch.setOnClickListener(v -> search());
         editTextWord.setOnEditorActionListener((v, actionId, event) -> {

@@ -9,10 +9,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import vn.edu.fpt.koreandictionary.R;
 import vn.edu.fpt.koreandictionary.model.KRDictResponse;
+import vn.edu.fpt.koreandictionary.util.ApiKeyManager;
 
 public class ApiTestActivity extends AppCompatActivity {
     private static final String TAG = "ApiTestActivity";
-    private static final String API_KEY = BuildConfig.KR_DICT_API_KEY;
     private TextView textViewResult;
 
     @Override
@@ -28,7 +28,8 @@ public class ApiTestActivity extends AppCompatActivity {
 
     private void testApi(String word) {
         KRDictApiService api = RetrofitClient.getClient().create(KRDictApiService.class);
-        Call<KRDictResponse> call = api.searchWord(API_KEY, word, "y", "1", 10, 1, "dict", "word", "n");
+        String apiKey = ApiKeyManager.getApiKey(this);
+        Call<KRDictResponse> call = api.searchWord(apiKey, word, "y", "1", 10, 1, "dict", "word", "n");
         call.enqueue(new Callback<KRDictResponse>() {
             @Override
             public void onResponse(Call<KRDictResponse> call, Response<KRDictResponse> response) {
@@ -76,7 +77,7 @@ public class ApiTestActivity extends AppCompatActivity {
     }
 
     private void testRawApi(String word) {
-        RawApiTest.testRawApi(word, new RawApiTest.ApiCallback() {
+        RawApiTest.testRawApi(this, word, new RawApiTest.ApiCallback() {
             @Override
             public void onResult(String response) {
                 runOnUiThread(() -> {

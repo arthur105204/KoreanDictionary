@@ -27,6 +27,7 @@ public interface KRDictApiService {
         @Query("part") String part,
         @Query("translated") String translated,
         @Query("trans_lang") String transLang,
-        @Query("num") Integer num
+        @Query("num") Integer num,
+        @Query("start") Integer start
     );
 } 
