@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import vn.edu.fpt.koreandictionary.data.entity.Favorite;
+import vn.edu.fpt.koreandictionary.data.entity.SearchHistory;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -20,6 +22,7 @@ import vn.edu.fpt.koreandictionary.model.ExampleResponse;
 import vn.edu.fpt.koreandictionary.model.KRDictResponse;
 import vn.edu.fpt.koreandictionary.model.POSGroup;
 import vn.edu.fpt.koreandictionary.model.Sense;
+import vn.edu.fpt.koreandictionary.data.repository.DictionaryRepository;
 import vn.edu.fpt.koreandictionary.network.KRDictApiService;
 import vn.edu.fpt.koreandictionary.network.RetrofitClient;
 import vn.edu.fpt.koreandictionary.util.ApiKeyManager;
@@ -27,10 +30,13 @@ import vn.edu.fpt.koreandictionary.util.Resource;
 
 public class DictionaryViewModel extends ViewModel {
     private final MutableLiveData<Resource<List<POSGroup>>> result = new MutableLiveData<>();
+    private final MutableLiveData<List<SearchHistory>> searchHistory = new MutableLiveData<>();
+    private final MutableLiveData<List<Favorite>> favorites = new MutableLiveData<>();
     private String baseWord = "";
     private String pos = "";
     private List<Example> examples = new ArrayList<>();
     private Context context;
+    private DictionaryRepository repository;
 
     public LiveData<Resource<List<POSGroup>>> getResult() {
         return result;
@@ -46,6 +52,17 @@ public class DictionaryViewModel extends ViewModel {
 
     public void setContext(Context context) {
         this.context = context;
+        if (repository == null) {
+            repository = new DictionaryRepository(context);
+        }
+    }
+    
+    public LiveData<List<SearchHistory>> getSearchHistory() {
+        return searchHistory;
+    }
+    
+    public LiveData<List<Favorite>> getFavorites() {
+        return favorites;
     }
 
     private String getApiKey() {
@@ -74,9 +91,18 @@ public class DictionaryViewModel extends ViewModel {
                     List<Sense> senses = item.getSenses();
                     if (senses == null) senses = new ArrayList<>();
                     
+                    // Save to search history
+                    if (repository != null) {
+                        repository.insertSearchHistory(word, response.body().getTotal());
+                    }
+                    
                     // Now fetch examples
                     fetchExamples(word, senses, pos);
                 } else {
+                    // Save to search history even if no results
+                    if (repository != null) {
+                        repository.insertSearchHistory(word, 0);
+                    }
                     result.setValue(Resource.success(new ArrayList<>()));
                 }
             }
@@ -140,5 +166,68 @@ public class DictionaryViewModel extends ViewModel {
         }
         
         return posGroups;
+    }
+    
+    // History and Favorites Management
+    public void loadSearchHistory() {
+        if (repository != null) {
+            repository.getAllHistory().observeForever(history -> {
+                searchHistory.setValue(history);
+            });
+        }
+    }
+    
+    public void loadFavorites() {
+        if (repository != null) {
+            repository.getAllFavorites().observeForever(favs -> {
+                favorites.setValue(favs);
+            });
+        }
+    }
+    
+    public void addToFavorites(String word, String definition, String pos, String pronunciation) {
+        if (repository != null) {
+            repository.addToFavorites(word, definition, pos, pronunciation);
+        }
+    }
+    
+    public void removeFromFavorites(String word) {
+        if (repository != null) {
+            repository.removeFromFavorites(word);
+        }
+    }
+    
+    public boolean isFavorite(String word) {
+        if (repository != null) {
+            List<Favorite> currentFavorites = favorites.getValue();
+            if (currentFavorites != null) {
+                for (Favorite favorite : currentFavorites) {
+                    if (favorite.getWord().equals(word)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    public void clearSearchHistory() {
+        if (repository != null) {
+            repository.deleteAllHistory();
+        }
+    }
+    
+    public void clearFavorites() {
+        if (repository != null) {
+            repository.deleteAllFavorites();
+        }
+    }
+    
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (repository != null) {
+            repository.shutdown();
+        }
     }
 } 
